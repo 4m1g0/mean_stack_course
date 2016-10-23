@@ -90,16 +90,3 @@ function handleMany(property, res, error, result) {
     res.json(json);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-

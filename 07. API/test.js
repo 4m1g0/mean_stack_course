@@ -4,7 +4,7 @@ var express = require('express');
 var wagner = require('wagner-core');
 var URL_ROOT = 'http://localhost:3000';
 
-/*describe('Category API', function() {
+describe('Category API', function() {
     var server;
     var Category;
     
@@ -84,7 +84,7 @@ var URL_ROOT = 'http://localhost:3000';
         });
         
     });
-});*/
+});
 
 describe('Product API', function() {
     var Caregory;
@@ -106,7 +106,7 @@ describe('Product API', function() {
     });
     
     after(function(){
-        server.close;
+        server.close();
     });
     
     beforeEach(function(done){
@@ -219,17 +219,4 @@ describe('Product API', function() {
         });
     });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
