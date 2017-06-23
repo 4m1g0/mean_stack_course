@@ -220,3 +220,154 @@ describe('Product API', function() {
     });
 });
 
+describe('UserAPI', function(){
+    var server;
+    var Category;
+    var Product;
+    var User;
+    var PRODUCT_ID = '000000000000000000000001';
+    
+    before(function() {
+        var app = express();
+        
+        app.use(function(req, res, next) {
+            User.findOne({}, function(error, user) {
+                assert.ifError(error);
+                req.user = user;
+                next();
+            });
+        });
+        
+        //Bootstrap server
+        models = require('./models')(wagner);
+        app.use(require('./api')(wagner));
+    
+        server = app.listen(3000);
+        
+        // make Category model available in tests
+        Category = models.Category;
+        Product = models.Product;
+        User = models.User;
+    });
+    
+    beforeEach(function(done) {
+        Category.remove({},function(error) {
+            assert.ifError(error);
+            
+            // empty products before each test
+            Product.remove({},function(error) {
+                assert.ifError(error);
+                done();
+            });
+        });
+        
+        var categories = [
+            {_id: 'Electronics'},
+            {_id: 'Phones', parent:'Electronics'},
+            {_id: 'Laptops', parent:'Electronics'},
+            {_id: 'Bacon'}
+        ];
+        
+        var products = [
+            {
+                name: 'LG G4',
+                category: {_id: 'Phones', ancestors: ['Electronics', 'Phones']},
+                price: {
+                    amount: 300,
+                    currency: 'USD'
+                }
+            },
+            {
+                _id: PRODUCT_ID,
+                name: 'Asus Zenbook Prime',
+                category: {_id: 'Laptops', ancestors: ['Electronics', 'Laptops']},
+                price: {
+                    amount: 2000,
+                    currency: 'USD'
+                }
+            },
+            {
+                name: 'Pork bacon',
+                category: {_id: 'Bacon', ancestors: ['Bacon']},
+                price: {
+                    amount: 20,
+                    currency: 'USD'
+                }
+            }
+        ];
+        
+        var users = [{
+            profile: {
+                username: 'vkarpov15',
+                picture: 'http://test.com'
+            },
+            data: {
+                oauth: 'invalid',
+                cart: []
+            }
+        }];
+        
+        Category.create(categories, function(error) {
+            assert.ifError(error);
+            Product.create(products, function(error) {
+                assert.ifError(error);
+                User.create(users, function(error) {
+                    assert.ifError(error);
+                });
+            });
+        });
+    });
+    
+    after(function(){
+        server.close();
+    });
+    
+    it('can save users cart', function(done) {
+        var url = URL_ROOT + '/me/cart';
+        superagent.
+            put(url).
+            send({
+                data: {
+                    cart: [{product: PRODUCT_ID, quantity: 1}]
+                }
+            }).
+            end(function(error, res){
+                assert.ifError(error);
+                assert.equal(res.status, 200);
+                User.findOne({}, function(error, user) {
+                    assert.ifError(error);
+                    assert.equal(user.data.cart.length, 1);
+                    assert.equal(user.data.cart[0].product, PRODUCT_ID);
+                    assert.equal(user.data.cart[0].quantity, 1);
+                    done();
+                });
+            });
+    });
+    
+    it('can load users cart', function(done) {
+        var url = URL_ROOT + '/me';
+        
+        User.findOne({}, function(error, user) {
+            assert.ifError(error);
+            user.data.cart = [{product: PRODUCT_ID, quantity: 1}];
+            user.save(function(error){
+                assert.ifError(error);
+                
+                superagent.get(url, function(error, res) {
+                    assert.ifError(error);
+                    
+                    assert.equal(res.status, 200);
+                    var result;
+                    assert.doesNotThrow(function() {
+                        result = JSON.parse(res.text).user;
+                    });
+                    assert.equal(result.data.cart.length, 1);
+                    assert.equal(result.data.cart[0].product.name, 'Asus Zenbook Prime');
+                    assert.equal(result.data.cart[0].quantity, 1);
+                    done();
+                });
+            });
+        });
+    });
+});
+
