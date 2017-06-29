@@ -13,6 +13,7 @@ describe('Category API', function() {
         
         //Bootstrap server
         models = require('./models')(wagner);
+        require('./dependencies')(wagner);
         app.use(require('./api')(wagner));
     
         server = app.listen(3000);
@@ -239,6 +240,7 @@ describe('UserAPI', function(){
         });
         
         //Bootstrap server
+        Stripe = require('./dependencies')(wagner).Stripe;
         models = require('./models')(wagner);
         app.use(require('./api')(wagner));
     
@@ -251,16 +253,6 @@ describe('UserAPI', function(){
     });
     
     beforeEach(function(done) {
-        Category.remove({},function(error) {
-            assert.ifError(error);
-            
-            // empty products before each test
-            Product.remove({},function(error) {
-                assert.ifError(error);
-                done();
-            });
-        });
-        
         var categories = [
             {_id: 'Electronics'},
             {_id: 'Phones', parent:'Electronics'},
@@ -307,13 +299,27 @@ describe('UserAPI', function(){
             }
         }];
         
-        Category.create(categories, function(error) {
+        Category.remove({},function(error) {
             assert.ifError(error);
+            
+            Category.create(categories, function(error) {
+                assert.ifError(error);
+            });
+        });
+        
+        // empty products before each test
+        Product.remove({},function(error) {
+            assert.ifError(error);
+            
             Product.create(products, function(error) {
                 assert.ifError(error);
-                User.create(users, function(error) {
-                    assert.ifError(error);
-                });
+            });
+        });
+        
+        User.remove({}, function(error) {
+            User.create(users, function(error) {
+                assert.ifError(error);
+                done();
             });
         });
     });
@@ -369,5 +375,60 @@ describe('UserAPI', function(){
             });
         });
     });
+    
+    it('can check out', 
+        function(done) {
+            var url = URL_ROOT + '/checkout';
+            
+            // setup data
+            User.findOne({},
+                function(error, user) {
+                    assert.ifError(error);
+                    user.data.cart = [{product: PRODUCT_ID, quantity: 1}];
+                    user.save(
+                        function(error) {
+                            assert.ifError(error);
+                            
+                            // checkout through the API
+                            superagent.
+                                post(url).
+                                send(
+                                    {
+                                        stripeToken: {
+                                            number: '4242424242424242',
+                                            cvc: '123',
+                                            exp_month: 12,
+                                            exp_year: 2017
+                                        }
+                                    }
+                                ).
+                                end(function(error, res) {
+                                    assert.ifError(error);
+                                    
+                                    assert.equal(res.status, 200);
+                                    var result;
+                                    
+                                    
+                                    assert.doesNotThrow(function() {
+                                        result = JSON.parse(res.text);
+                                    });
+                                    
+                                    assert.ok(result.id);
+                                    
+                                    Stripe.charges.retrieve(result.id, function(error, charge) {
+                                        assert.ifError(error);
+                                        assert.ok(charge);
+                                        assert.equal(charge.amount, 2000 * 100); //2000 usd
+                                        done();
+                                    });
+                                });
+                        }
+                    );
+                }
+            );
+        }
+    );
+    
+    
 });
 
