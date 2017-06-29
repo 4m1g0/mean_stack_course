@@ -429,6 +429,34 @@ describe('UserAPI', function(){
         }
     );
     
+    it('can search by text', 
+        function(done) {
+            var url = URL_ROOT + '/product/text/asus';
+            
+            // Get products whose name contains 'asus'
+            superagent.get(
+                url,
+                function(error, res){
+                    assert.ifError(error);
+                    
+                    assert.equal(res.status, 200);
+                    
+                    var results;
+                    assert.doesNotThrow(function() {
+                        results = JSON.parse(res.text).products;
+                    });
+                    
+                    assert.equal(results.length, 1);
+                    assert.equal(results[0]._id, PRODUCT_ID);
+                    assert.equal(results[0].name, 'Asus Zenbook Prime'); 
+                    done();
+                }
+            ); 
+        }
+    );
+    
+    
+    
     
 });
 

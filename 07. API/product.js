@@ -30,5 +30,9 @@ var productSchema = {
     }
 };
 
-module.exports = new mongoose.Schema(productSchema);
+var schema = new mongoose.Schema(productSchema);
+
+schema.index({name: 'text'});
+
+module.exports = schema;
 module.exports.productSchema = productSchema;
