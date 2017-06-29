@@ -101,9 +101,16 @@ describe('Product API', function() {
     
         server = app.listen(3000);
         
-        // make Category model available in tests
-        Category = models.Category;
-        Product = models.Product;
+        // make Category and product models available in tests
+        var deps = wagner.invoke(function(Category, Product) {
+            return {
+                Category: Category,
+                Product: Product
+            };
+        });
+        
+        Category = deps.Category;
+        Product = deps.Product;
     });
     
     after(function(){
@@ -240,16 +247,25 @@ describe('UserAPI', function(){
         });
         
         //Bootstrap server
-        Stripe = require('./dependencies')(wagner).Stripe;
         models = require('./models')(wagner);
         app.use(require('./api')(wagner));
     
         server = app.listen(3000);
         
-        // make Category model available in tests
-        Category = models.Category;
-        Product = models.Product;
-        User = models.User;
+        // make models available in tests
+        var deps = wagner.invoke(function(Category, Product, User, Stripe) {
+            return {
+                Category: Category,
+                Product: Product,
+                User: User,
+                Stripe: Stripe
+            };
+        });
+        
+        Category = deps.Category;
+        Product = deps.Product;
+        User = deps.User;
+        Stripe = deps.Stripe;
     });
     
     beforeEach(function(done) {

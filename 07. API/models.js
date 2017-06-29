@@ -5,14 +5,16 @@ module.exports = function(wagner) {
     if (!mongoose.connection.readyState)
         mongoose.connect('mongodb://localhost:27017/test');
     
+    wagner.factory('db', function() {
+        return mongoose;
+    });
+    
     var Category = mongoose.model('Category', require('./category'), 'categories');
-    var Product = mongoose.model('Product', require('./product'), 'products');
     var User = mongoose.model('User', require('./user'), 'users');
     
     var models = {
         Category: Category,
-        Product: Product,
-        User, User
+        User: User
     };
     
     _.each(models, function(value, key) {
@@ -21,9 +23,7 @@ module.exports = function(wagner) {
         });
     });
 
-    return {
-        Category: Category,
-        Product: Product,
-        User, User
-    };
+    wagner.factory('Product', require('./product'));
+    
+    return models;
 };
