@@ -1,10 +1,15 @@
 {
-    "devDependencies": {
-        "karma": "0.12.16",
-        "chai": "4.1.0",
-        "karma-chai": "0.1.0",
-        "karma-chrome-launcher": "0.1.4",
-        "mocha": "3.4.1",
-        "karma-mocha": "0.1.4"
-    }
+  "devDependencies": {
+    "browserify": "10.2.3",
+    "gulp": "3.8.11",
+    "gulp-browserify": "0.5.1",
+    "karma": "0.12.16",
+    "chai": "4.1.0",
+    "karma-chai": "0.1.0",
+    "karma-chrome-launcher": "0.1.4",
+    "mocha": "3.4.1",
+    "karma-mocha": "0.1.4",
+    "http-status": "0.1.8",
+    "underscore": "1.5.2"
+  }
 }
